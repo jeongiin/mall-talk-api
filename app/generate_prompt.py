@@ -1,36 +1,44 @@
 import openai
 import os
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.vectorstores import ElasticVectorSearch, Pinecone, Weaviate, FAISS
+
+from langchain.chains.question_answering import load_qa_chain
+from langchain.chat_models import ChatOpenAI
+from langchain.chains import AnalyzeDocumentChain
+
+from langchain.llms import OpenAI
+from langchain.agents import create_pandas_dataframe_agent
+import pandas as pd
+
+def csv_to_txt(csv_path):
+    with open(csv_path, 'r') as f:
+        reader = csv.reader(f)
+        rows = [row for row in reader]
+    return rows
+
 # -*- coding: utf-8 -*-
 
-def generate_prompt(query, n):
-    
-    return query + "\n === \n" + "위 내용을 20글자 이내 문장 "+str(n)+"개로 넘버링해서 묘사해줘." 
-
-
-def content_to_array(content):
-    array = content.split('\n')
-    return array
-
-
-def generate_content(prompt, model_gpt="gpt-3.5-turbo"):
+def generate_content(user_content, model_gpt="gpt-3.5-turbo"):
 
     # 발급받은 API 키 설정
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     OPENAI_API_KEY = open(os.path.join(BASE_DIR, "token.txt"), 'r').readline()
+
     # openai API 키 인증
     openai.api_key = OPENAI_API_KEY
+    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
-    # 메시지 설정하기
-    messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
-    ]
-
-    # ChatGPT API 호출하기
-    response = openai.ChatCompletion.create(
-        model=model_gpt,
-        messages=messages
-    )
-    answer = response['choices'][0]['message']['content']
+    # mall_db load
+    mall_df = pd.read_csv("/Users/timdalxx/PROJECT/mall-talk-api/mall-talk-api/app/data/xmall_data_v2.5.csv")
+    mall = create_pandas_dataframe_agent(llm=OpenAI(temperature=0.9), df=mall_df, verbose=True)
     
-    return answer
+    mall.run("옷을 사고 밥을 먹기에 괜찮은 장소를 각각 2곳씩 추천해줘")
+
+    exit()
+
+    
+
+# if __name__ == "__main__":
+    
