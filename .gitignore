@@ -1,5 +1,7 @@
 # data
 .data/
+*.xlsx
+*.csv
 
 # text
 *token.txt
